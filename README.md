@@ -9,6 +9,7 @@ Unofficial API Wrapper for CryptAPI in .NET
 #### Initialization:
 ```csharp
 var CryptApi = new CryptAPI(CryptoCurrency.BTC);
+var CryptApiCustomHttpClient = new CryptAPI(CryptoCurrency.BTC, new HttpClient());
 ```
 
 #### Create a charge:
