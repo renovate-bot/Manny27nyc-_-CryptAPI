@@ -1,6 +1,5 @@
-﻿using CryptAPI.Enums;
-using CryptAPI.Extensions;
-using CryptAPI.Models;
+﻿using CryptAPI.Models;
+using CryptAPI.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -17,58 +16,78 @@ namespace CryptAPI
     public class CryptAPI
     {
 
-        internal CryptAPISettings CryptAPISettings { get; set; }
-        internal HttpClient HttpClient { get; set; }
+        private HttpClient HttpClient { get; set; }
+        private CryptoCurrency _CryptoCurrency { get; set; }
 
-        public CryptAPI(CryptAPISettings CryptAPISettings, HttpClient HttpClient = null)
+
+        /// <summary>
+        /// Library initialization
+        /// </summary>
+        /// <param name="CryptoCurrency">The cryptocurrency you will use</param>
+        /// <param name="CustomHttpClient">Your own configured HttpClient (optional)</param>
+        public CryptAPI(CryptoCurrency CryptoCurrency, HttpClient CustomHttpClient = null)
         {
-            this.HttpClient = HttpClient ?? new HttpClient();
-            this.CryptAPISettings = CryptAPISettings;            
+            _CryptoCurrency = CryptoCurrency;
+            HttpClient = CustomHttpClient ?? new HttpClient();
         }
 
-        public string Get_Address()
+        /// <summary>
+        /// When you call this method, a invoice will be created, this method returns the bitcoin address 
+        /// where your customer needs to pay, after the payment is completed and reaches 1 confirmation, 
+        /// CryptAPI will issue a GET request to your callback, so I recommend that you enter parameters 
+        /// that define the user's invoice, for example, create a random ID and that is integrated into 
+        /// your database and you enter it as a parameter in your callback, then when CryptAPI makes the 
+        /// GET request, your website It delivers the product or service to its user, you can enter the 
+        /// parameters you want. I recommend that everything be under HTTPS.
+        /// </summary>
+        /// <param name="CallBack">Website where CryptAPI will make a GET request when the user sends the payment and the order reaches 1 confirmation</param>
+        /// <returns></returns>
+        public string CreateCharge(string Address, string CallBack)
         {
+            if (string.IsNullOrEmpty(CallBack) || string.IsNullOrEmpty(Address))
+                throw new HttpRequestException($"You must specify your {(string.IsNullOrEmpty(CallBack) ? "CallBack URL" : "Crypto address")}");
 
-            string callback_url = CryptAPISettings.Callback;
+            var ChargeResponse = RequestAsync($"/{_CryptoCurrency.ToString().ToLower()}/create/?address={Address}&callback={CallBack}").Result;
 
-            if (CryptAPISettings.Parameters != null && CryptAPISettings.Parameters.Count > 0)
-                callback_url = $"{CryptAPISettings.Callback}{CryptAPISettings.Parameters.HttpBuildQuery()}";
+            dynamic crdyn = JObject.Parse(ChargeResponse);
 
-            var callback_params = new NameValueCollection()
-            {
-                { "callback", callback_url },
-                { "address", CryptAPISettings.Address }
-            };
-
-            if (CryptAPISettings.callback_params != null && CryptAPISettings.callback_params.Count > 0)
-                callback_params.Add(CryptAPISettings.callback_params);
-
-            var responseString = Request(callback_params).Result;
-
-            dynamic dyn = JsonConvert.DeserializeObject(responseString);
-
-            return dyn.status == "success" ? dyn.address_in : null;
-
+            return crdyn.status == "success" ? crdyn.address_in : null;
         }
 
-        private async Task<string> Request(NameValueCollection Params = null)
+        /// <summary>
+        /// Get up-to-date information of the crypto currency
+        /// </summary>
+        /// <returns></returns>
+        public CryptoCurrencyInfo CurrencyInfo()
         {
+            return JsonConvert.DeserializeObject<CryptoCurrencyInfo>(RequestAsync($"/{_CryptoCurrency.ToString().ToLower()}/info/").Result);
+        }
 
-            string data = null;
+        /// <summary>
+        /// With this method you will get all the information about the request to your callback, 
+        /// the payment confirmation, the next re-attempt to make a next request, etc.
+        /// </summary>
+        /// <param name="Callback">The previously entered callback url</param>
+        /// <returns></returns>
+        public CallbackLogs CallBackLogs(string Callback)
+        {
+            return JsonConvert.DeserializeObject<CallbackLogs>(RequestAsync($"/{_CryptoCurrency.ToString().ToLower()}/logs/?callback={Callback}").Result);
+        }
 
-            if (Params != null)
-                data = Params.HttpBuildQuery();
+        private async Task<string> RequestAsync(string EndPoint)
+        {      
+            var RequestResponse = await HttpClient.GetAsync(Globals.BaseURL + EndPoint);
 
-            try
+            var RequestString = await RequestResponse.Content.ReadAsStringAsync();
+
+            if (!RequestResponse.IsSuccessStatusCode)
             {
-                var ResponseString = await HttpClient.GetStringAsync($"{Globals.BaseURL}/{CryptAPISettings.Coin}/{CryptAPISettings.EndPoint}/{data ?? string.Empty}");
+                dynamic crdyn = JObject.Parse(RequestString);
 
-                return ResponseString;
-            }
-            catch
-            {
-                return null;
-            }                        
+                throw new HttpRequestException($"Error : {crdyn.error}");
+            }            
+
+            return RequestString;
         }
     }
 }

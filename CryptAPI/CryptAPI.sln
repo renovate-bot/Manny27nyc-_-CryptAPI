@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.31129.286
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptAPI", "CryptAPI\CryptAPI.csproj", "{69DBF6C4-4331-457E-83FC-975345D12AE3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptAPI.Test", "CryptAPI.Test\CryptAPI.Test.csproj", "{3F43692C-EB1C-40A0-8172-A2728B249653}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{69DBF6C4-4331-457E-83FC-975345D12AE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69DBF6C4-4331-457E-83FC-975345D12AE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69DBF6C4-4331-457E-83FC-975345D12AE3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F43692C-EB1C-40A0-8172-A2728B249653}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F43692C-EB1C-40A0-8172-A2728B249653}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F43692C-EB1C-40A0-8172-A2728B249653}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F43692C-EB1C-40A0-8172-A2728B249653}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
